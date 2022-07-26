@@ -1,10 +1,11 @@
 const hre = require("hardhat");
 const Library = require("../artifacts/contracts/Library.sol/Library.json");
 const walletKey =
-  "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
-const contractAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
-const provider = new hre.ethers.providers.JsonRpcProvider(
-  "http://localhost:8545"
+  "796e2930429e8606d9b4e3a635b649e31909413245097056d87bab9ae3bf098c";
+const contractAddress = "0x15c69195AA2E3A90aaa8B8383E44630FeA8f07Bf";
+const provider = new hre.ethers.providers.InfuraProvider(
+  "ropsten",
+  "40c2813049e44ec79cb4d7e0d18de173"
 );
 
 books = [
@@ -31,6 +32,28 @@ const addBooks = async function (contract) {
   }
 };
 
+const rentBook = async function (contract, bookId) {
+  const rentBook = await contract.rentBook(bookId);
+  const rentBookReciept = await rentBook.wait();
+  if (rentBookReciept.status != 1) {
+    console.log("Transaction was unsuccessfull!");
+    return;
+  }
+};
+
+const returnBook = async function (contract, bookId) {
+  const returnBook = await contract.returnBook(bookId);
+  const returnBookReciept = await returnBook.wait();
+  if (returnBookReciept.status != 1) {
+    console.log("Transaction was unsuccessfull!");
+    return;
+  }
+};
+
+const getAllBooks = async function (contract) {
+  const getAllBooks = await contract.getAllBooks();
+  return `All available books: ${getAllBooks}`;
+};
 const run = async function () {
   const wallet = new hre.ethers.Wallet(walletKey, provider);
   const libraryContract = new hre.ethers.Contract(
@@ -41,9 +64,18 @@ const run = async function () {
 
   await addBooks(libraryContract);
 
-  const getAllBooks = await libraryContract.getAllBooks();
+  let availableBooks = await getAllBooks(libraryContract);
+  console.log(availableBooks);
 
-  console.log(getAllBooks);
+  await rentBook(libraryContract, 0);
+
+  const rentedBook = await libraryContract.getBookRentersById(0);
+  console.log(`This book was rented by ${rentedBook}`);
+
+  await returnBook(libraryContract, 0);
+
+  availableBooks = await getAllBooks(libraryContract);
+  console.log(availableBooks);
 };
 
 run();
