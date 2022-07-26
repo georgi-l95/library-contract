@@ -15,13 +15,13 @@ contract LibraryBase is Ownable, BookCheck, Validation {
 
     mapping(bytes32 => uint256) booksIds;
     mapping(string => Book) bookNameMap;
-    mapping(address => mapping(uint256 => bool)) buyers;
-    mapping(uint256 => address[]) bookBuyers;
+    mapping(address => mapping(uint256 => bool)) renter;
+    mapping(uint256 => address[]) bookRenters;
 
     event BookAdded(uint256 id, string name, uint256 quantity);
     event BookUpdated(uint256 id, string name, uint256 quantity);
-    event BookBought(uint256 id, address buyer);
-    event BookRefund(uint256 id);
+    event BookRented(uint256 id, address renter);
+    event BookReturn(uint256 id);
 
     function internalAddBook(
         uint256 id,
@@ -39,27 +39,27 @@ contract LibraryBase is Ownable, BookCheck, Validation {
         books[id].quantity = quantity;
     }
 
-    function internalAddBuyer(uint256 id, address client) internal {
-        buyers[client][id] = true;
-        bookBuyers[id].push(client);
+    function internalAddRenter(uint256 id, address client) internal {
+        renter[client][id] = true;
+        bookRenters[id].push(client);
     }
 
-    function internalRefund(uint256 id, address client) internal {
-        bool bought = buyers[client][id];
+    function internalReturn(uint256 id, address client) internal {
+        bool rented = renter[client][id];
 
         require(
-            bought,
-            "You've already returned your Book or didn't even bought it."
+            rented,
+            "You've already returned your Book or didn't even rent it."
         );
-        buyers[client][id] = false;
+        renter[client][id] = false;
     }
 
-    function internalCheckBuyers(uint256 id, address client)
+    function internalCheckRenter(uint256 id, address client)
         internal
         view
         returns (bool)
     {
-        return buyers[client][id];
+        return renter[client][id];
     }
 
     function generateId(string memory name) internal pure returns (bytes32) {

@@ -35,7 +35,7 @@ contract Library is LibraryBase {
         emit BookUpdated(id, selectedBook.name, selectedBook.quantity);
     }
 
-    function buyBook(uint256 id)
+    function rentBook(uint256 id)
         public
         quantityCheck(books[id].quantity)
         bookExist(id, books.length)
@@ -43,24 +43,24 @@ contract Library is LibraryBase {
         address client = msg.sender;
         Book storage selectedBook = books[id];
 
-        bool alreadyBoughtByClient = internalCheckBuyers(id, client);
+        bool alreadyRentedByClient = internalCheckRenter(id, client);
         require(
-            !alreadyBoughtByClient,
-            "You cannot buy the same Book more than once!"
+            !alreadyRentedByClient,
+            "You cannot rent the same Book more than once!"
         );
-        internalAddBuyer(id, client);
+        internalAddRenter(id, client);
         selectedBook.quantity--;
 
-        emit BookBought(id, client);
+        emit BookRented(id, client);
     }
 
-    function refundBook(uint256 id) public bookExist(id, books.length) {
+    function returnBook(uint256 id) public bookExist(id, books.length) {
         address client = msg.sender;
 
-        internalRefund(id, client);
+        internalReturn(id, client);
         Book storage selectedBook = books[id];
         selectedBook.quantity++;
-        emit BookRefund(id);
+        emit BookReturn(id);
     }
 
     function getBookByName(string memory name)
@@ -87,13 +87,13 @@ contract Library is LibraryBase {
         return selectedBook;
     }
 
-    function getBookBuyersById(uint256 id)
+    function getBookRentersById(uint256 id)
         public
         view
         bookExist(id, books.length)
         returns (address[] memory)
     {
-        return bookBuyers[id];
+        return bookRenters[id];
     }
 
     function getAllBooks() public view returns (Book[] memory) {
