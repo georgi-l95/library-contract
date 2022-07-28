@@ -48,6 +48,9 @@ contract Library is LibraryBase {
             !alreadyRentedByClient,
             "You cannot rent the same Book more than once!"
         );
+        require(
+            IERC20(LIBToken).transferFrom(msg.sender, address(this), rentPrice)
+        );
         internalAddRenter(id, client);
         selectedBook.quantity--;
 
@@ -98,5 +101,29 @@ contract Library is LibraryBase {
 
     function getAllBooks() public view returns (Book[] memory) {
         return books;
+    }
+
+    function setLIBTokenAddress(address token) public onlyOwner {
+        LIBToken = token;
+    }
+
+    function setRentPrice(uint256 price) public onlyOwner {
+        rentPrice = price;
+    }
+
+    function setLIBWrapperAddress(address wrapper) public onlyOwner {
+        LIBWrapper = wrapper;
+    }
+
+    function unwrapProfit() public onlyOwner {
+        IERC20(LIBToken).approve(
+            LIBWrapper,
+            IERC20(LIBToken).balanceOf(address(this))
+        );
+        Wrapper(LIBWrapper).unwrap(IERC20(LIBToken).balanceOf(address(this)));
+    }
+
+    function withdraw() public onlyOwner {
+        payable(owner()).transfer(address(this).balance);
     }
 }
