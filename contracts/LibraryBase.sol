@@ -50,6 +50,10 @@ contract LibraryBase is Ownable, BookCheck, Validation {
     event BookRented(uint256 id, address renter);
     event BookReturn(uint256 id);
 
+    receive() external payable {}
+
+    fallback() external payable {}
+
     function internalAddBook(
         uint256 id,
         string memory name,

@@ -116,6 +116,10 @@ contract Library is LibraryBase {
     }
 
     function unwrapProfit() public onlyOwner {
+        IERC20(LIBToken).approve(
+            LIBWrapper,
+            IERC20(LIBToken).balanceOf(address(this))
+        );
         Wrapper(LIBWrapper).unwrap(IERC20(LIBToken).balanceOf(address(this)));
     }
 
