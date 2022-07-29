@@ -35,7 +35,7 @@ contract Library is LibraryBase {
         emit BookUpdated(id, selectedBook.name, selectedBook.quantity);
     }
 
-    function rentBook(uint256 id)
+    function borrowBook(uint256 id)
         public
         quantityCheck(books[id].quantity)
         bookExist(id, books.length)
@@ -43,18 +43,54 @@ contract Library is LibraryBase {
         address client = msg.sender;
         Book storage selectedBook = books[id];
 
-        bool alreadyRentedByClient = internalCheckRenter(id, client);
+        bool alreadyBorrowedByClient = internalCheckBorrower(id, client);
+        (id, client);
         require(
-            !alreadyRentedByClient,
+            !alreadyBorrowedByClient,
             "You cannot rent the same Book more than once!"
         );
         require(
             IERC20(LIBToken).transferFrom(msg.sender, address(this), rentPrice)
         );
-        internalAddRenter(id, client);
+        internalAddBorrower(id, client);
+        (id, client);
         selectedBook.quantity--;
 
-        emit BookRented(id, client);
+        emit BookBorrowed(id, client);
+    }
+
+    function borrowBookWithPermit(
+        uint256 id,
+        uint256 value,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public quantityCheck(books[id].quantity) bookExist(id, books.length) {
+        address client = msg.sender;
+        Book storage selectedBook = books[id];
+        bool alreadyRentedByClient = internalCheckBorrower(id, client);
+        require(
+            !alreadyRentedByClient,
+            "You cannot rent the same Book more than once!"
+        );
+
+        IERC20(LIBToken).permit(
+            msg.sender,
+            address(this),
+            value,
+            deadline,
+            v,
+            r,
+            s
+        );
+        require(
+            IERC20(LIBToken).transferFrom(msg.sender, address(this), rentPrice)
+        );
+        internalAddBorrower(id, client);
+        selectedBook.quantity--;
+
+        emit BookBorrowed(id, client);
     }
 
     function returnBook(uint256 id) public bookExist(id, books.length) {
@@ -96,7 +132,7 @@ contract Library is LibraryBase {
         bookExist(id, books.length)
         returns (address[] memory)
     {
-        return bookRenters[id];
+        return bookBorrowers[id];
     }
 
     function getAllBooks() public view returns (Book[] memory) {

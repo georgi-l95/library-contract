@@ -22,6 +22,16 @@ interface IERC20 {
         address to,
         uint256 value
     ) external returns (bool);
+
+    function permit(
+        address owner,
+        address spender,
+        uint256 value,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
 }
 
 interface Wrapper {
@@ -42,12 +52,12 @@ contract LibraryBase is Ownable, BookCheck, Validation {
     uint256 public rentPrice = 100000000000000000;
     mapping(bytes32 => uint256) booksIds;
     mapping(string => Book) bookNameMap;
-    mapping(address => mapping(uint256 => bool)) renter;
-    mapping(uint256 => address[]) bookRenters;
+    mapping(address => mapping(uint256 => bool)) borrower;
+    mapping(uint256 => address[]) bookBorrowers;
 
     event BookAdded(uint256 id, string name, uint256 quantity);
     event BookUpdated(uint256 id, string name, uint256 quantity);
-    event BookRented(uint256 id, address renter);
+    event BookBorrowed(uint256 id, address borrower);
     event BookReturn(uint256 id);
 
     receive() external payable {}
@@ -70,27 +80,27 @@ contract LibraryBase is Ownable, BookCheck, Validation {
         books[id].quantity = quantity;
     }
 
-    function internalAddRenter(uint256 id, address client) internal {
-        renter[client][id] = true;
-        bookRenters[id].push(client);
+    function internalAddBorrower(uint256 id, address client) internal {
+        borrower[client][id] = true;
+        bookBorrowers[id].push(client);
     }
 
     function internalReturn(uint256 id, address client) internal {
-        bool rented = renter[client][id];
+        bool rented = borrower[client][id];
 
         require(
             rented,
             "You've already returned your Book or didn't even rent it."
         );
-        renter[client][id] = false;
+        borrower[client][id] = false;
     }
 
-    function internalCheckRenter(uint256 id, address client)
+    function internalCheckBorrower(uint256 id, address client)
         internal
         view
         returns (bool)
     {
-        return renter[client][id];
+        return borrower[client][id];
     }
 
     function generateId(string memory name) internal pure returns (bytes32) {
